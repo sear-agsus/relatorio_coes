@@ -126,7 +126,7 @@
   <div class="header-inner">
     <div class="header-badge"><span>📋</span> AgSUS</div>
     <h1>Relatório Mensal de Atividades</h1>
-    <p class="header-sub">Escritórios Regionais e Distritais — Agência de Saúde Indígena</p>
+    <p class="header-sub">Rede Territorial da AgSUS - Escritórios Regionais e Distritais</p>
   </div>
 </div>
 
@@ -464,7 +464,7 @@ function gerarPDF() {
 
   doc.setFontSize(9);
   doc.setFont('helvetica','normal');
-  doc.text('Escritórios Regionais e Distritais — Agência de Saúde Indígena', ML, 30);
+  doc.text('Rede Territorial da AgSUS - Escritórios Regionais e Distritais', ML, 30);
 
   // Data de geração
   const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'});
