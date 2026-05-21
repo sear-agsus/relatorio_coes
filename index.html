@@ -224,10 +224,10 @@
     </div>
   </div>
 
-  <!-- 3.1 Articulação Institucional -->
+  <!-- 2 Articulação Institucional -->
   <div class="section">
     <div class="section-header">
-      <div class="section-number">3.1</div>
+      <div class="section-number">2</div>
       <div class="section-title">Articulação Institucional</div>
     </div>
     <div class="section-body">
@@ -258,7 +258,7 @@
   <!-- 3.2 Programas e Projetos -->
   <div class="section">
     <div class="section-header">
-      <div class="section-number">3.2</div>
+      <div class="section-number">3</div>
       <div class="section-title">Acompanhamento de Programas e Projetos</div>
     </div>
     <div class="section-body">
@@ -293,7 +293,7 @@
   <!-- 3.3 Supervisão N-GART -->
   <div class="section">
     <div class="section-header">
-      <div class="section-number">3.3</div>
+      <div class="section-number">4</div>
       <div class="section-title">Supervisão Operacional N-GART</div>
     </div>
     <div class="section-body">
@@ -328,7 +328,7 @@
   <!-- 4. Observações Gerais -->
   <div class="section">
     <div class="section-header">
-      <div class="section-number">4</div>
+      <div class="section-number">5</div>
       <div class="section-title">Observações Gerais / Considerações Finais</div>
     </div>
     <div class="section-body">
@@ -542,8 +542,8 @@ function gerarPDF() {
   infoRow('Responsável',        g('responsavel'), true);
   y += 6;
 
-  /* ── Seção 3.1 ── */
-  sectionHeader('3.1', 'Articulação Institucional');
+  /* ── Seção 2 ── */
+  sectionHeader('2', 'Articulação Institucional');
   if (articulacao.length === 0) {
     doc.setTextColor(...CINZA_MED); doc.setFontSize(9); doc.setFont('helvetica','italic');
     doc.text('(nenhum registro)', ML + 3, y + 5); y += 10;
