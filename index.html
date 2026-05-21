@@ -231,7 +231,7 @@
   <!-- 3.1 Articulação Institucional -->
   <div class="section">
     <div class="section-header">
-      <div class="section-number">3.1</div>
+      <div class="section-number">2</div>
       <div class="section-title">Articulação Institucional</div>
     </div>
     <div class="section-body">
@@ -262,7 +262,7 @@
   <!-- 3.2 Programas e Projetos -->
   <div class="section">
     <div class="section-header">
-      <div class="section-number">3.2</div>
+      <div class="section-number">3</div>
       <div class="section-title">Acompanhamento de Programas e Projetos</div>
     </div>
     <div class="section-body">
@@ -297,7 +297,7 @@
   <!-- 3.3 Supervisão N-GART -->
   <div class="section">
     <div class="section-header">
-      <div class="section-number">3.3</div>
+      <div class="section-number">4</div>
       <div class="section-title">Supervisão Operacional N-GART</div>
     </div>
     <div class="section-body">
@@ -307,7 +307,7 @@
             <th style="width:26%">Atividade Supervisionada</th>
             <th style="width:22%">Local</th>
             <th style="width:16%">Situação</th>
-            <th style="width:28%">Observações</th>
+            <th style="width:28%">Encaminhamentos</th>
             <th style="width:8%"></th>
           </tr></thead>
           <tbody id="bodySupervisao">
@@ -316,10 +316,10 @@
               <td><input type="text" name="sup_local[]" placeholder="Ex.: Aldeia X / Município Y"></td>
               <td><select name="sup_situacao[]">
                 <option value="">Selecione…</option>
-                <option>Regular</option><option>Irregular</option>
-                <option>Em análise</option><option>Não verificado</option>
+                <option>Em andamento</option><option>Concluído</option>
+                <option>Pendente</option><option>Suspenso</option><option>Não iniciado</option>
               </select></td>
-              <td><textarea name="sup_observacoes[]" placeholder="Observações relevantes…"></textarea></td>
+              <td><textarea name="sup_encaminhamentos[]" placeholder="Encaminhamentos…"></textarea></td>
               <td><button type="button" class="btn-remove" onclick="removeRow(this)">×</button></td>
             </tr>
           </tbody>
@@ -332,7 +332,7 @@
   <!-- 4. Observações Gerais -->
   <div class="section">
     <div class="section-header">
-      <div class="section-number">4</div>
+      <div class="section-number">5</div>
       <div class="section-title">Observações Gerais / Considerações Finais</div>
     </div>
     <div class="section-body">
@@ -419,9 +419,9 @@ function supervisaoRow() {
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><input type="text" name="sup_atividade[]" placeholder="Atividade supervisionada"></td>
-    <td><input type="text" name="sup_local[]" placeholder="Local"></td>
+    <td><input type="text" name="sup_local[]" placeholder="Assunto"></td>
     <td><select name="sup_situacao[]"><option value="">Selecione…</option><option>Regular</option><option>Irregular</option><option>Em análise</option><option>Não verificado</option></select></td>
-    <td><textarea name="sup_observacoes[]" placeholder="Observações…"></textarea></td>
+    <td><textarea name="sup_encaminhamentos[]" placeholder="Encaminhamentos…"></textarea></td>
     <td><button type="button" class="btn-remove" onclick="removeRow(this)">×</button></td>`;
   return tr;
 }
@@ -514,7 +514,7 @@ function gerarPDF() {
 
   const articulacao = collectTable('bodyArticulacao', ['Atividade','Órgão/Instituição','Objetivo','Encaminhamentos']);
   const programas   = collectTable('bodyProgramas',   ['Programa/Projeto','Situação','Atividades Executadas','Resultados']);
-  const supervisao  = collectTable('bodySupervisao',  ['Atividade Supervisionada','Local','Situação','Observações']);
+  const supervisao  = collectTable('bodySupervisao',  ['Atividade Supervisionada','Local','Situação','Encaminhamentos']);
   const obs         = (fd.get('observacoesGerais') || '').trim() || '(nenhuma)';
 
   /* ── Funções utilitárias ── */
@@ -618,8 +618,8 @@ function gerarPDF() {
     doc.autoTable({
       startY: y,
       margin: { left: ML, right: MR },
-      head: [['Atividade Supervisionada','Local','Situação','Observações']],
-      body: supervisao.map(r => [r['Atividade Supervisionada'], r['Local'], r['Situação'], r['Observações']]),
+      head: [['Atividade Supervisionada','Local','Situação','Encaminhamentos']],
+      body: supervisao.map(r => [r['Atividade Supervisionada'], r['Local'], r['Situação'], r['Encaminhamentos']]),
       styles: { fontSize: 8, cellPadding: 3, textColor: CINZA_ESC, lineColor: CINZA_CLR, lineWidth: 0.2 },
       headStyles: { fillColor: CINZA_ESC, textColor: BRANCO, fontStyle: 'bold', fontSize: 7.5 },
       alternateRowStyles: { fillColor: [248, 252, 249] },
