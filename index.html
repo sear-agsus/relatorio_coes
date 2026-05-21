@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório Mensal de Atividades – AgSUS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<!-- jsPDF + autoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root {
+    --verde: #1a6b3c;
+    --verde-claro: #2d9b5a;
+    --verde-suave: #e8f5ee;
+    --amarelo: #f0b429;
+    --branco: #f9fafb;
+    --cinza-escuro: #1c2330;
+    --cinza-medio: #4a5568;
+    --cinza-claro: #e2e8f0;
+    --sombra: 0 4px 24px rgba(26,107,60,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sora', sans-serif; background: #f0f4f0; color: var(--cinza-escuro); min-height: 100vh; }
+
+  /* Header */
+  .header { background: var(--verde); color: white; position: relative; overflow: hidden; }
+  .header::before { content:''; position:absolute; top:-60px; right:-60px; width:260px; height:260px; background:var(--verde-claro); border-radius:50%; opacity:0.25; }
+  .header::after  { content:''; position:absolute; bottom:-40px; left:30%; width:180px; height:180px; background:var(--amarelo); border-radius:50%; opacity:0.12; }
+  .header-inner { max-width:920px; margin:0 auto; padding:44px 32px 36px; position:relative; z-index:1; }
+  .header-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); border-radius:20px; padding:4px 14px; font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:18px; font-family:'IBM Plex Mono',monospace; }
+  .header-badge span { font-size:14px; }
+  h1 { font-size:clamp(22px,4vw,32px); font-weight:700; line-height:1.2; letter-spacing:-0.5px; margin-bottom:6px; }
+  .header-sub { font-size:14px; font-weight:300; opacity:0.8; }
+
+  /* Container */
+  .container { max-width:920px; margin:0 auto; padding:36px 20px 60px; }
+
+  /* Section */
+  .section { background:white; border-radius:16px; box-shadow:var(--sombra); margin-bottom:28px; overflow:hidden; animation:fadeUp 0.5s ease both; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
+  .section:nth-child(2){animation-delay:.05s} .section:nth-child(3){animation-delay:.10s}
+  .section:nth-child(4){animation-delay:.15s} .section:nth-child(5){animation-delay:.20s}
+  .section:nth-child(6){animation-delay:.25s}
+
+  .section-header { background:var(--verde-suave); border-left:5px solid var(--verde); padding:16px 28px; display:flex; align-items:center; gap:12px; }
+  .section-number { background:var(--verde); color:white; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; font-family:'IBM Plex Mono',monospace; flex-shrink:0; }
+  .section-title { font-size:13px; font-weight:600; color:var(--verde); text-transform:uppercase; letter-spacing:0.5px; }
+  .section-body { padding:28px; }
+
+  /* Grids */
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .grid-1 { display:grid; grid-template-columns:1fr; gap:20px; }
+  .col-span-2 { grid-column:span 2; }
+  @media(max-width:680px){ .grid-3,.grid-2{grid-template-columns:1fr;} .col-span-2{grid-column:span 1;} }
+
+  .field { display:flex; flex-direction:column; gap:7px; }
+  label { font-size:11px; font-weight:600; color:var(--cinza-medio); text-transform:uppercase; letter-spacing:0.9px; }
+
+  input[type="text"], input[type="month"], select, textarea {
+    font-family:'Sora',sans-serif; font-size:14px; padding:11px 14px;
+    border:1.5px solid var(--cinza-claro); border-radius:10px;
+    background:var(--branco); color:var(--cinza-escuro);
+    transition:border-color 0.2s,box-shadow 0.2s; outline:none; width:100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--verde-claro); box-shadow:0 0 0 3px rgba(45,155,90,0.12); background:white; }
+  textarea { resize:vertical; min-height:86px; line-height:1.6; }
+  input[readonly] { background:#f0f4f0; color:var(--cinza-medio); cursor:default; border-color:#d4dde6; }
+
+  .tipo-badge { display:inline-flex; align-items:center; padding:10px 16px; border-radius:10px; font-size:14px; font-weight:600; border:1.5px solid var(--cinza-claro); background:#f0f4f0; color:var(--cinza-medio); min-height:44px; }
+  .tipo-badge.regional  { background:#e8f0ff; color:#2a4db5; border-color:#b3c8ff; }
+  .tipo-badge.distrital { background:var(--verde-suave); color:var(--verde); border-color:#a8d9be; }
+
+  /* Tabelas */
+  .dyn-table-wrap { overflow-x:auto; }
+  .dyn-table { width:100%; border-collapse:collapse; font-size:13px; min-width:580px; }
+  .dyn-table thead th { background:var(--cinza-escuro); color:white; padding:11px 12px; text-align:left; font-weight:600; font-size:11px; letter-spacing:0.8px; text-transform:uppercase; }
+  .dyn-table thead th:first-child{border-radius:8px 0 0 0;} .dyn-table thead th:last-child{border-radius:0 8px 0 0;}
+  .dyn-table tbody tr { border-bottom:1px solid var(--cinza-claro); }
+  .dyn-table tbody tr:hover { background:var(--verde-suave); }
+  .dyn-table td { padding:7px 8px; vertical-align:top; }
+  .dyn-table td input, .dyn-table td select, .dyn-table td textarea { padding:8px 10px; font-size:13px; border-radius:7px; min-height:unset; }
+  .dyn-table td textarea { min-height:60px; }
+
+  /* Botões */
+  .btn-add { display:inline-flex; align-items:center; gap:7px; margin-top:14px; background:var(--verde-suave); color:var(--verde); border:1.5px dashed var(--verde-claro); border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Sora',sans-serif; transition:background 0.2s; }
+  .btn-add:hover { background:#c8e8d5; }
+  .btn-remove { background:none; border:none; cursor:pointer; color:#c0392b; font-size:18px; padding:2px 6px; border-radius:6px; line-height:1; transition:background 0.15s; }
+  .btn-remove:hover { background:#fde8e8; }
+
+  /* Submit area */
+  .submit-wrap { text-align:center; padding:8px 0 0; }
+  .note { font-size:12px; color:#6b7a8d; background:#f4f6f8; border-left:3px solid var(--cinza-claro); border-radius:0 8px 8px 0; padding:10px 14px; margin-bottom:20px; text-align:left; }
+
+  .btn-submit {
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--verde); color:white; border:none;
+    padding:16px 48px; border-radius:50px; font-family:'Sora',sans-serif;
+    font-size:16px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 18px rgba(26,107,60,0.25);
+    transition:background 0.2s,transform 0.15s,box-shadow 0.2s;
+  }
+  .btn-submit:hover { background:var(--verde-claro); transform:translateY(-2px); box-shadow:0 8px 24px rgba(26,107,60,0.28); }
+  .btn-submit:active { transform:translateY(0); }
+  .btn-submit:disabled { background:#8cb8a0; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  /* Spinner dentro do botão */
+  .spinner { width:18px; height:18px; border:2.5px solid rgba(255,255,255,0.4); border-top-color:white; border-radius:50%; animation:spin 0.7s linear infinite; display:none; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .btn-submit.loading .spinner { display:block; }
+  .btn-submit.loading .btn-label { opacity:0.7; }
+
+  /* Toast */
+  #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--cinza-escuro); color:white; padding:14px 28px; border-radius:40px; font-size:14px; font-weight:600; box-shadow:0 8px 32px rgba(0,0,0,0.25); transition:transform 0.35s cubic-bezier(.34,1.56,.64,1),opacity 0.3s; opacity:0; pointer-events:none; z-index:999; }
+  #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+  #toast.success { background:var(--verde); }
+  #toast.error   { background:#c0392b; }
+
+  .divider { height:1px; background:var(--cinza-claro); margin:22px 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-badge"><span>📋</span> AgSUS</div>
+    <h1>Relatório Mensal de Atividades</h1>
+    <p class="header-sub">Escritórios Regionais e Distritais — Agência de Saúde Indígena</p>
+  </div>
+</div>
+
+<div class="container">
+<form id="relatorioForm">
+
+  <!-- 1. Identificação -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <div class="section-title">Identificação</div>
+    </div>
+    <div class="section-body">
+
+      <div class="grid-1" style="margin-bottom:20px;">
+        <div class="field">
+          <label>Nome do Escritório</label>
+          <select id="selectEscritorio" name="nomeEscritorio" required onchange="preencherEscritorio(this.value)">
+            <option value="">— Selecione o escritório —</option>
+            <optgroup label="Escritórios Regionais">
+              <option value="Escritório Regional do Amazonas|AM|Regional">Escritório Regional do Amazonas</option>
+              <option value="Escritório Regional da Bahia|BA|Regional">Escritório Regional da Bahia</option>
+              <option value="Escritório Regional de Cuiabá|MT|Regional">Escritório Regional de Cuiabá</option>
+              <option value="Escritório Regional do Pará|PA|Regional">Escritório Regional do Pará</option>
+              <option value="Escritório Regional de Pernambuco|PE|Regional">Escritório Regional de Pernambuco</option>
+              <option value="Escritório Regional do Paraná|PR|Regional">Escritório Regional do Paraná</option>
+              <option value="Escritório Regional de Roraima|RR|Regional">Escritório Regional de Roraima</option>
+              <option value="Escritório Regional de São Paulo|SP|Regional">Escritório Regional de São Paulo</option>
+            </optgroup>
+            <optgroup label="Escritórios Distritais">
+              <option value="Escritório Distrital de Altamira|PA|Distrital">Escritório Distrital de Altamira</option>
+              <option value="Escritório Distrital de Atalaia do Norte|AM|Distrital">Escritório Distrital de Atalaia do Norte</option>
+              <option value="Escritório Distrital de Barra do Garças|MT|Distrital">Escritório Distrital de Barra do Garças</option>
+              <option value="Escritório Distrital de Belém|PA|Distrital">Escritório Distrital de Belém</option>
+              <option value="Escritório Distrital de Boa Vista|RR|Distrital">Escritório Distrital de Boa Vista</option>
+              <option value="Escritório Distrital de Cacoal|RO|Distrital">Escritório Distrital de Cacoal</option>
+              <option value="Escritório Distrital de Campo Grande|MS|Distrital">Escritório Distrital de Campo Grande</option>
+              <option value="Escritório Distrital de Canarana|MT|Distrital">Escritório Distrital de Canarana</option>
+              <option value="Escritório Distrital de Colíder|MT|Distrital">Escritório Distrital de Colíder</option>
+              <option value="Escritório Distrital de Cruzeiro do Sul|AC|Distrital">Escritório Distrital de Cruzeiro do Sul</option>
+              <option value="Escritório Distrital de Cuiabá|MT|Distrital">Escritório Distrital de Cuiabá</option>
+              <option value="Escritório Distrital de Curitiba|PR|Distrital">Escritório Distrital de Curitiba</option>
+              <option value="Escritório Distrital de Florianópolis|SC|Distrital">Escritório Distrital de Florianópolis</option>
+              <option value="Escritório Distrital de Fortaleza|CE|Distrital">Escritório Distrital de Fortaleza</option>
+              <option value="Escritório Distrital de Governador Valadares|MG|Distrital">Escritório Distrital de Governador Valadares</option>
+              <option value="Escritório Distrital de Itaituba|PA|Distrital">Escritório Distrital de Itaituba</option>
+              <option value="Escritório Distrital de João Pessoa|PB|Distrital">Escritório Distrital de João Pessoa</option>
+              <option value="Escritório Distrital de Lábrea|AM|Distrital">Escritório Distrital de Lábrea</option>
+              <option value="Escritório Distrital de Leste Roraima|RR|Distrital">Escritório Distrital de Leste Roraima</option>
+              <option value="Escritório Distrital de Maceió|AL|Distrital">Escritório Distrital de Maceió</option>
+              <option value="Escritório Distrital de Macapá|AP|Distrital">Escritório Distrital de Macapá</option>
+              <option value="Escritório Distrital de Manaus|AM|Distrital">Escritório Distrital de Manaus</option>
+              <option value="Escritório Distrital de Palmas|TO|Distrital">Escritório Distrital de Palmas</option>
+              <option value="Escritório Distrital de Parintins|AM|Distrital">Escritório Distrital de Parintins</option>
+              <option value="Escritório Distrital de Porto Velho|RO|Distrital">Escritório Distrital de Porto Velho</option>
+              <option value="Escritório Distrital de Recife|PE|Distrital">Escritório Distrital de Recife</option>
+              <option value="Escritório Distrital de Redenção|PA|Distrital">Escritório Distrital de Redenção</option>
+              <option value="Escritório Distrital de Rio Branco|AC|Distrital">Escritório Distrital de Rio Branco</option>
+              <option value="Escritório Distrital de Salvador|BA|Distrital">Escritório Distrital de Salvador</option>
+              <option value="Escritório Distrital de São Félix do Araguaia|MT|Distrital">Escritório Distrital de São Félix do Araguaia</option>
+              <option value="Escritório Distrital de São Gabriel da Cachoeira|AM|Distrital">Escritório Distrital de São Gabriel da Cachoeira</option>
+              <option value="Escritório Distrital de São Luís|MA|Distrital">Escritório Distrital de São Luís</option>
+              <option value="Escritório Distrital de Tabatinga|AM|Distrital">Escritório Distrital de Tabatinga</option>
+              <option value="Escritório Distrital de Tefé|AM|Distrital">Escritório Distrital de Tefé</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:20px;">
+        <div class="field">
+          <label>Tipo de Escritório</label>
+          <div class="tipo-badge" id="tipoBadge">—</div>
+          <input type="hidden" name="tipoEscritorio" id="tipoEscritorioHidden">
+        </div>
+        <div class="field">
+          <label>UF</label>
+          <input type="text" name="uf" id="ufField" readonly placeholder="Preenchido automaticamente">
+        </div>
+        <div class="field">
+          <label>Mês de Referência</label>
+          <input type="month" name="mesReferencia" required>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid-2">
+        <div class="field col-span-2">
+          <label>Responsável pelo Relatório</label>
+          <input type="text" name="responsavel" placeholder="Nome completo do responsável">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 3.1 Articulação Institucional -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">3.1</div>
+      <div class="section-title">Articulação Institucional</div>
+    </div>
+    <div class="section-body">
+      <div class="dyn-table-wrap">
+        <table class="dyn-table">
+          <thead><tr>
+            <th style="width:22%">Atividade</th>
+            <th style="width:20%">Órgão / Instituição</th>
+            <th style="width:26%">Objetivo</th>
+            <th style="width:24%">Encaminhamentos</th>
+            <th style="width:8%"></th>
+          </tr></thead>
+          <tbody id="bodyArticulacao">
+            <tr>
+              <td><input type="text" name="art_atividade[]" placeholder="Ex.: Reunião CONDISI"></td>
+              <td><input type="text" name="art_orgao[]" placeholder="Ex.: CONDISI Palmas"></td>
+              <td><textarea name="art_objetivo[]" placeholder="Descreva o objetivo…"></textarea></td>
+              <td><textarea name="art_encaminhamento[]" placeholder="Encaminhamentos realizados…"></textarea></td>
+              <td><button type="button" class="btn-remove" onclick="removeRow(this)">×</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button type="button" class="btn-add" onclick="addRow('bodyArticulacao', articulacaoRow)">+ Adicionar linha</button>
+    </div>
+  </div>
+
+  <!-- 3.2 Programas e Projetos -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">3.2</div>
+      <div class="section-title">Acompanhamento de Programas e Projetos</div>
+    </div>
+    <div class="section-body">
+      <div class="dyn-table-wrap">
+        <table class="dyn-table">
+          <thead><tr>
+            <th style="width:22%">Programa / Projeto</th>
+            <th style="width:16%">Situação</th>
+            <th style="width:31%">Atividades Executadas</th>
+            <th style="width:23%">Resultados</th>
+            <th style="width:8%"></th>
+          </tr></thead>
+          <tbody id="bodyProgramas">
+            <tr>
+              <td><input type="text" name="prog_nome[]" placeholder="Ex.: Fiscalização de Contrato"></td>
+              <td><select name="prog_situacao[]">
+                <option value="">Selecione…</option>
+                <option>Em andamento</option><option>Concluído</option>
+                <option>Pendente</option><option>Suspenso</option><option>Não iniciado</option>
+              </select></td>
+              <td><textarea name="prog_atividades[]" placeholder="Descreva as atividades…"></textarea></td>
+              <td><textarea name="prog_resultados[]" placeholder="Resultados obtidos…"></textarea></td>
+              <td><button type="button" class="btn-remove" onclick="removeRow(this)">×</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button type="button" class="btn-add" onclick="addRow('bodyProgramas', programasRow)">+ Adicionar linha</button>
+    </div>
+  </div>
+
+  <!-- 3.3 Supervisão N-GART -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">3.3</div>
+      <div class="section-title">Supervisão Operacional N-GART</div>
+    </div>
+    <div class="section-body">
+      <div class="dyn-table-wrap">
+        <table class="dyn-table">
+          <thead><tr>
+            <th style="width:26%">Atividade Supervisionada</th>
+            <th style="width:22%">Local</th>
+            <th style="width:16%">Situação</th>
+            <th style="width:28%">Observações</th>
+            <th style="width:8%"></th>
+          </tr></thead>
+          <tbody id="bodySupervisao">
+            <tr>
+              <td><input type="text" name="sup_atividade[]" placeholder="Ex.: Ponto de Controle"></td>
+              <td><input type="text" name="sup_local[]" placeholder="Ex.: Aldeia X / Município Y"></td>
+              <td><select name="sup_situacao[]">
+                <option value="">Selecione…</option>
+                <option>Regular</option><option>Irregular</option>
+                <option>Em análise</option><option>Não verificado</option>
+              </select></td>
+              <td><textarea name="sup_observacoes[]" placeholder="Observações relevantes…"></textarea></td>
+              <td><button type="button" class="btn-remove" onclick="removeRow(this)">×</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button type="button" class="btn-add" onclick="addRow('bodySupervisao', supervisaoRow)">+ Adicionar linha</button>
+    </div>
+  </div>
+
+  <!-- 4. Observações Gerais -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <div class="section-title">Observações Gerais / Considerações Finais</div>
+    </div>
+    <div class="section-body">
+      <div class="grid-1">
+        <div class="field">
+          <label>Observações e Considerações</label>
+          <textarea name="observacoesGerais" rows="6" placeholder="Registre dificuldades encontradas, demandas identificadas, ou quaisquer outras informações relevantes para o período…"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botão -->
+  <div class="submit-wrap">
+    <p class="note">
+      Preencha todos os campos e clique em <strong>Baixar PDF</strong> — o relatório será gerado e salvo diretamente no seu computador.
+    </p>
+    <button type="submit" class="btn-submit" id="btnSubmit">
+      <div class="spinner"></div>
+      <span class="btn-label">⬇ Baixar Relatório em PDF</span>
+    </button>
+  </div>
+
+</form>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ── Auto-preenchimento ── */
+function preencherEscritorio(val) {
+  const badge  = document.getElementById('tipoBadge');
+  const ufField = document.getElementById('ufField');
+  const hidden  = document.getElementById('tipoEscritorioHidden');
+  if (!val) { badge.textContent='—'; badge.className='tipo-badge'; ufField.value=''; hidden.value=''; return; }
+  const [, uf, tipo] = val.split('|');
+  ufField.value = uf; hidden.value = tipo;
+  badge.textContent = tipo;
+  badge.className   = 'tipo-badge ' + tipo.toLowerCase();
+}
+
+/* ── Templates de linha ── */
+function articulacaoRow() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="art_atividade[]" placeholder="Atividade"></td>
+    <td><input type="text" name="art_orgao[]" placeholder="Órgão/Instituição"></td>
+    <td><textarea name="art_objetivo[]" placeholder="Objetivo…"></textarea></td>
+    <td><textarea name="art_encaminhamento[]" placeholder="Encaminhamentos…"></textarea></td>
+    <td><button type="button" class="btn-remove" onclick="removeRow(this)">×</button></td>`;
+  return tr;
+}
+function programasRow() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="prog_nome[]" placeholder="Programa/Projeto"></td>
+    <td><select name="prog_situacao[]"><option value="">Selecione…</option><option>Em andamento</option><option>Concluído</option><option>Pendente</option><option>Suspenso</option><option>Não iniciado</option></select></td>
+    <td><textarea name="prog_atividades[]" placeholder="Atividades…"></textarea></td>
+    <td><textarea name="prog_resultados[]" placeholder="Resultados…"></textarea></td>
+    <td><button type="button" class="btn-remove" onclick="removeRow(this)">×</button></td>`;
+  return tr;
+}
+function supervisaoRow() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="sup_atividade[]" placeholder="Atividade supervisionada"></td>
+    <td><input type="text" name="sup_local[]" placeholder="Local"></td>
+    <td><select name="sup_situacao[]"><option value="">Selecione…</option><option>Regular</option><option>Irregular</option><option>Em análise</option><option>Não verificado</option></select></td>
+    <td><textarea name="sup_observacoes[]" placeholder="Observações…"></textarea></td>
+    <td><button type="button" class="btn-remove" onclick="removeRow(this)">×</button></td>`;
+  return tr;
+}
+function addRow(id, fn) { document.getElementById(id).appendChild(fn()); }
+function removeRow(btn) {
+  const tb = btn.closest('tbody');
+  if (tb.rows.length > 1) btn.closest('tr').remove();
+  else showToast('Deve haver ao menos uma linha.', 'error');
+}
+
+/* ── Toast ── */
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `show ${type}`;
+  setTimeout(() => t.className = '', 3500);
+}
+
+/* ── Coleta de tabela ── */
+function collectTable(tbodyId, cols) {
+  const data = [];
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(row => {
+    const obj = {};
+    cols.forEach((col, i) => {
+      const el = row.querySelectorAll('td')[i]?.querySelector('input,textarea,select');
+      obj[col] = el ? el.value.trim() : '';
+    });
+    if (Object.values(obj).some(v => v)) data.push(obj);
+  });
+  return data;
+}
+
+/* ── Helpers de cor (RGB arrays para jsPDF) ── */
+const VERDE       = [26, 107, 60];
+const VERDE_SUAVE = [232, 245, 238];
+const CINZA_ESC   = [28, 35, 48];
+const CINZA_MED   = [74, 85, 104];
+const BRANCO      = [255, 255, 255];
+const CINZA_CLR   = [226, 232, 240];
+
+/* ── Geração do PDF ── */
+function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const PW = 210, PH = 297;
+  const ML = 14, MR = 14, MT = 14;
+  const CW = PW - ML - MR;
+  let y = MT;
+
+  // Fonte padrão
+  doc.setFont('helvetica');
+
+  /* ── Cabeçalho verde ── */
+  doc.setFillColor(...VERDE);
+  doc.rect(0, 0, PW, 38, 'F');
+
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','bold');
+  doc.text('AgSUS', ML, 12);
+
+  doc.setFontSize(16);
+  doc.text('RELATÓRIO MENSAL DE ATIVIDADES', ML, 22);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.text('Escritórios Regionais e Distritais — Agência de Saúde Indígena', ML, 30);
+
+  // Data de geração
+  const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'});
+  doc.setFontSize(8);
+  doc.text(`Gerado em ${hoje}`, PW - MR, 30, { align:'right' });
+
+  y = 46;
+
+  /* ── Coleta de dados ── */
+  const fd = new FormData(document.getElementById('relatorioForm'));
+  const g  = k => fd.get(k) || '—';
+  const sel = document.getElementById('selectEscritorio');
+  const nomeEsc = sel.value ? sel.value.split('|')[0] : '—';
+
+  // Formata mês
+  const mesRaw = g('mesReferencia');
+  let mesFormatado = mesRaw;
+  if (mesRaw && mesRaw !== '—') {
+    const [ano, mes] = mesRaw.split('-');
+    const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    mesFormatado = `${nomes[parseInt(mes)-1]} / ${ano}`;
+  }
+
+  const articulacao = collectTable('bodyArticulacao', ['Atividade','Órgão/Instituição','Objetivo','Encaminhamentos']);
+  const programas   = collectTable('bodyProgramas',   ['Programa/Projeto','Situação','Atividades Executadas','Resultados']);
+  const supervisao  = collectTable('bodySupervisao',  ['Atividade Supervisionada','Local','Situação','Observações']);
+  const obs         = (fd.get('observacoesGerais') || '').trim() || '(nenhuma)';
+
+  /* ── Funções utilitárias ── */
+  function sectionHeader(num, title) {
+    if (y > PH - 30) { doc.addPage(); y = MT; }
+    doc.setFillColor(...VERDE_SUAVE);
+    doc.rect(ML, y, CW, 8, 'F');
+    doc.setFillColor(...VERDE);
+    doc.rect(ML, y, 1.5, 8, 'F');
+
+    doc.setTextColor(...VERDE);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','bold');
+    doc.text(num, ML + 4, y + 5.5);
+
+    doc.setFontSize(9);
+    doc.text(title.toUpperCase(), ML + 14, y + 5.5);
+    y += 12;
+  }
+
+  function infoRow(label, value, isLast=false) {
+    const lw = 52;
+    doc.setFillColor(248, 250, 252);
+    doc.rect(ML, y, lw, 7, 'F');
+    doc.setFillColor(...BRANCO);
+    doc.rect(ML + lw, y, CW - lw, 7, 'F');
+    // borda
+    doc.setDrawColor(...CINZA_CLR);
+    doc.setLineWidth(0.2);
+    doc.rect(ML, y, CW, 7);
+
+    doc.setTextColor(...CINZA_MED);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica','bold');
+    doc.text(label, ML + 3, y + 4.8);
+
+    doc.setTextColor(...CINZA_ESC);
+    doc.setFont('helvetica','normal');
+    doc.text(String(value), ML + lw + 3, y + 4.8);
+    y += 7;
+  }
+
+  /* ── Seção 1: Identificação ── */
+  sectionHeader('1', 'Identificação');
+  infoRow('Tipo de Escritório', g('tipoEscritorio'));
+  infoRow('Nome do Escritório', nomeEsc);
+  infoRow('UF', g('uf'));
+  infoRow('Mês de Referência',  mesFormatado);
+  infoRow('Responsável',        g('responsavel'), true);
+  y += 6;
+
+  /* ── Seção 3.1 ── */
+  sectionHeader('3.1', 'Articulação Institucional');
+  if (articulacao.length === 0) {
+    doc.setTextColor(...CINZA_MED); doc.setFontSize(9); doc.setFont('helvetica','italic');
+    doc.text('(nenhum registro)', ML + 3, y + 5); y += 10;
+  } else {
+    doc.autoTable({
+      startY: y,
+      margin: { left: ML, right: MR },
+      head: [['Atividade','Órgão / Instituição','Objetivo','Encaminhamentos']],
+      body: articulacao.map(r => [r['Atividade'], r['Órgão/Instituição'], r['Objetivo'], r['Encaminhamentos']]),
+      styles: { fontSize: 8, cellPadding: 3, textColor: CINZA_ESC, lineColor: CINZA_CLR, lineWidth: 0.2 },
+      headStyles: { fillColor: CINZA_ESC, textColor: BRANCO, fontStyle: 'bold', fontSize: 7.5 },
+      alternateRowStyles: { fillColor: [248, 252, 249] },
+      columnStyles: { 0:{cellWidth:38}, 1:{cellWidth:38}, 2:{cellWidth:'auto'}, 3:{cellWidth:'auto'} },
+      theme: 'grid',
+    });
+    y = doc.lastAutoTable.finalY + 6;
+  }
+
+  /* ── Seção 3.2 ── */
+  if (y > PH - 40) { doc.addPage(); y = MT; }
+  sectionHeader('3.2', 'Acompanhamento de Programas e Projetos');
+  if (programas.length === 0) {
+    doc.setTextColor(...CINZA_MED); doc.setFontSize(9); doc.setFont('helvetica','italic');
+    doc.text('(nenhum registro)', ML + 3, y + 5); y += 10;
+  } else {
+    doc.autoTable({
+      startY: y,
+      margin: { left: ML, right: MR },
+      head: [['Programa / Projeto','Situação','Atividades Executadas','Resultados']],
+      body: programas.map(r => [r['Programa/Projeto'], r['Situação'], r['Atividades Executadas'], r['Resultados']]),
+      styles: { fontSize: 8, cellPadding: 3, textColor: CINZA_ESC, lineColor: CINZA_CLR, lineWidth: 0.2 },
+      headStyles: { fillColor: CINZA_ESC, textColor: BRANCO, fontStyle: 'bold', fontSize: 7.5 },
+      alternateRowStyles: { fillColor: [248, 252, 249] },
+      columnStyles: { 0:{cellWidth:42}, 1:{cellWidth:26}, 2:{cellWidth:'auto'}, 3:{cellWidth:'auto'} },
+      theme: 'grid',
+    });
+    y = doc.lastAutoTable.finalY + 6;
+  }
+
+  /* ── Seção 3.3 ── */
+  if (y > PH - 40) { doc.addPage(); y = MT; }
+  sectionHeader('3.3', 'Supervisão Operacional N-GART');
+  if (supervisao.length === 0) {
+    doc.setTextColor(...CINZA_MED); doc.setFontSize(9); doc.setFont('helvetica','italic');
+    doc.text('(nenhum registro)', ML + 3, y + 5); y += 10;
+  } else {
+    doc.autoTable({
+      startY: y,
+      margin: { left: ML, right: MR },
+      head: [['Atividade Supervisionada','Local','Situação','Observações']],
+      body: supervisao.map(r => [r['Atividade Supervisionada'], r['Local'], r['Situação'], r['Observações']]),
+      styles: { fontSize: 8, cellPadding: 3, textColor: CINZA_ESC, lineColor: CINZA_CLR, lineWidth: 0.2 },
+      headStyles: { fillColor: CINZA_ESC, textColor: BRANCO, fontStyle: 'bold', fontSize: 7.5 },
+      alternateRowStyles: { fillColor: [248, 252, 249] },
+      columnStyles: { 0:{cellWidth:46}, 1:{cellWidth:36}, 2:{cellWidth:26}, 3:{cellWidth:'auto'} },
+      theme: 'grid',
+    });
+    y = doc.lastAutoTable.finalY + 6;
+  }
+
+  /* ── Seção 4: Observações ── */
+  if (y > PH - 50) { doc.addPage(); y = MT; }
+  sectionHeader('4', 'Observações Gerais / Considerações Finais');
+  doc.setFillColor(...BRANCO);
+  doc.setDrawColor(...CINZA_CLR);
+  doc.setLineWidth(0.2);
+
+  const obsLines = doc.splitTextToSize(obs, CW - 8);
+  const obsH = Math.max(20, obsLines.length * 5 + 8);
+  doc.rect(ML, y, CW, obsH);
+  doc.setTextColor(...CINZA_ESC);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica','normal');
+  doc.text(obsLines, ML + 4, y + 6);
+  y += obsH + 8;
+
+  /* ── Rodapé em todas as páginas ── */
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFillColor(...CINZA_CLR);
+    doc.rect(0, PH - 10, PW, 10, 'F');
+    doc.setTextColor(...CINZA_MED);
+    doc.setFontSize(7);
+    doc.setFont('helvetica','normal');
+    doc.text(`AgSUS — Relatório Mensal de Atividades`, ML, PH - 4);
+    doc.text(`Página ${i} de ${totalPages}`, PW - MR, PH - 4, { align:'right' });
+  }
+
+  /* ── Nome do arquivo ── */
+  const mes = mesFormatado !== '—' ? mesFormatado.replace(' / ', '-') : 'sem-data';
+  const esc = nomeEsc !== '—' ? nomeEsc.replace(/[^a-zA-Z0-9À-ú ]/g,'').trim().replace(/ +/g,'_') : 'escritorio';
+  const filename = `Relatorio_AgSUS_${esc}_${mes}.pdf`;
+
+  doc.save(filename);
+}
+
+/* ── Submit ── */
+document.getElementById('relatorioForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  if (!document.getElementById('selectEscritorio').value) {
+    showToast('Selecione o escritório antes de gerar o PDF.', 'error'); return;
+  }
+  if (!document.querySelector('[name="mesReferencia"]').value) {
+    showToast('Informe o mês de referência.', 'error'); return;
+  }
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  setTimeout(() => {
+    try {
+      gerarPDF();
+      showToast('✅ PDF gerado com sucesso!', 'success');
+    } catch(err) {
+      console.error(err);
+      showToast('Erro ao gerar o PDF. Verifique o console.', 'error');
+    }
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }, 100);
+});
+</script>
+</body>
+</html>
